@@ -2,7 +2,7 @@ module BasicForm exposing (main)
 
 import Browser
 import Html exposing (Html, label, input, text, form, button)
-import Html.Attributes exposing (id, for, value, placeholder)
+import Html.Attributes exposing (id, for, value, placeholder, style)
 import Html.Events exposing (onInput)
 
 main = 
@@ -24,27 +24,53 @@ update message model =
     UpdatePassword password -> { model | password = password }
 
 
+styleForm = 
+  [ style "display" "flex" 
+  , style "flex-direction" "column"
+  , style "width" "400px"
+  , style "margin" "auto"
+  , style "padding" "20px"
+  ] 
+
+styleInput =
+  [ style "margin" "10px 0"
+  , style "padding" "10px 5px"
+  ]
+
+styleButton = 
+  [ style "padding" "10px"
+  , style "text-transform" "uppercase"
+  ]
+
 view : Model ->  Html Message
 view model =
   form 
-    [] 
+    ([] ++ styleForm) 
     [ label 
         [ for "username" ] 
         [ text "username" ]
-    , input 
-        [ id "username" 
-        , value (.username model)
-        , onInput UpdateUsername 
-        , placeholder "enter username"
-        ] []
+    , input
+        (
+          styleInput ++ 
+          [ id "username" 
+          , value (.username model)
+          , onInput UpdateUsername 
+          , placeholder "enter username"
+          ]
+        ) 
+         []
     , label 
         [ for "password"]  
         [ text "password" ]
     , input 
-        [ id "password" 
-        , value (.password model)
-        , onInput UpdatePassword 
-        , placeholder "enter password"
-        ] []
-    , button [] [ text "submit" ]
+        (
+          styleInput ++ 
+          [ id "password" 
+          , value (.password model)
+          , onInput UpdatePassword 
+          , placeholder "enter password"
+          ]
+        ) 
+        []
+    , button ([] ++ styleButton) [ text "submit" ]
     ]
