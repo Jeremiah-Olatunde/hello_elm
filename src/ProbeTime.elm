@@ -1,6 +1,7 @@
 module ProbeTime exposing (..)
 
 import Browser
+import Debug
 import Html exposing (Html, div, text)
 import Task
 import Time
@@ -10,41 +11,69 @@ main =
     Browser.element { init = init, view = view, update = update, subscriptions = subscriptions }
 
 
-type Model
-    = Loading
-    | Data Time.Posix
+type ModelTime
+    = LoadingTime
+    | CurrentTime Time.Posix
+
+
+type ModelZone
+    = LoadingZone
+    | CurrentZone Time.Zone
+
+
+type alias Model =
+    { time : ModelTime, zone : ModelZone }
 
 
 type Message
-    = Now Time.Posix
+    = TimeData Time.Posix Time.Zone
+    | Tick Time.Posix
 
 
 init : () -> ( Model, Cmd Message )
 init _ =
-    ( Loading, Task.perform Now Time.now )
+    ( { time = LoadingTime, zone = LoadingZone }, Task.perform identity (Task.map2 TimeData Time.now Time.here) )
 
 
 update : Message -> Model -> ( Model, Cmd Message )
-update (Now time) model =
-    ( Data time, Cmd.none )
+update message { time, zone } =
+    case message of
+        TimeData t z ->
+            ( Model (CurrentTime t) (CurrentZone z), Cmd.none )
+
+        Tick t ->
+            ( Model (CurrentTime t) zone, Cmd.none )
 
 
 
 --case message of
---Now time ->
+--CurrentTime time ->
 --( Data time, Cmd.none )
 
 
 view : Model -> Html Message
-view model =
-    case model of
-        Loading ->
-            div [] [ text "loading time..." ]
+view { time, zone } =
+    case time of
+        LoadingTime ->
+            div [] [ text "loading posix time..." ]
 
-        Data posix ->
-            div [] [ text <| String.fromInt <| Time.posixToMillis <| posix ]
+        CurrentTime t ->
+            case zone of
+                LoadingZone ->
+                    div [] [ text "loading time zone." ]
+
+                CurrentZone z ->
+                    div
+                        []
+                        [ div [] [ text <| (++) "year: " <| String.fromInt <| Time.toYear z t ]
+                        , div [] [ text <| (++) "month: " <| Debug.toString <| Time.toMonth z t ]
+                        , div [] [ text <| (++) "weekday: " <| Debug.toString <| Time.toWeekday z t ]
+                        , div [] [ text <| (++) "hour: " <| Debug.toString <| Time.toHour z t ]
+                        , div [] [ text <| (++) "minute: " <| Debug.toString <| Time.toMinute z t ]
+                        , div [] [ text <| (++) "second: " <| Debug.toString <| Time.toSecond z t ]
+                        ]
 
 
 subscriptions : Model -> Sub Message
 subscriptions model =
-    Sub.none
+    Time.every 1000 Tick
